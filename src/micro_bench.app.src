@@ -1,0 +1,9 @@
+{application, micro_bench,
+ [
+  {description, "Microbench suite"},
+  {vsn, git},
+  {registered, []},
+  {applications, [kernel,
+                  stdlib]},
+  {env, []}
+ ]}.
