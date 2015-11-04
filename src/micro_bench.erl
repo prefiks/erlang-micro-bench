@@ -66,7 +66,7 @@ to_binary(Name) ->
 -spec find_optimal_iterations(fun(), list(), number(), number()) -> {number(), number()}.
 find_optimal_iterations(Fun, Attrs, Iter, ExpTime) ->
     {Time, _Res} = timer:tc(fun loop/3, [Fun, Attrs, Iter]),
-    if Time == 0 ->
+    if Time == 0 orelse (Iter == 1 andalso Time*20 < ExpTime) ->
             find_optimal_iterations(Fun, Attrs, Iter*10, ExpTime);
        Time > ExpTime*2 ->
             if Iter < 3 ->
