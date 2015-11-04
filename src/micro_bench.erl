@@ -20,8 +20,13 @@ measure(#{function := Fun, args := Args} = Def, Print) ->
                 Init ->
                     Init(Args)
             end,
-    Iters = find_optimal_iterations(Fun, NArgs, 1, 100000),
-    Res = measure_helper(Fun, NArgs, Iters, [], 1, 32, Print),
+    {Iters, Time} = find_optimal_iterations(Fun, NArgs, 1, 100000),
+    TestCounts = if 3*Time > 320000 ->
+                         3;
+                    true ->
+                         round(32*Time/100000)
+                 end,
+    Res = measure_helper(Fun, NArgs, Iters, [], 1, TestCounts, Print),
     case maps:get(clean, Def, none) of
         none ->
             ok;
@@ -58,21 +63,21 @@ to_binary(Name) when is_list(Name) ->
 to_binary(Name) ->
     Name.
 
--spec find_optimal_iterations(fun(), list(), number(), number()) -> number().
+-spec find_optimal_iterations(fun(), list(), number(), number()) -> {number(), number()}.
 find_optimal_iterations(Fun, Attrs, Iter, ExpTime) ->
     {Time, _Res} = timer:tc(fun loop/3, [Fun, Attrs, Iter]),
     if Time == 0 ->
             find_optimal_iterations(Fun, Attrs, Iter*10, ExpTime);
        Time > ExpTime*2 ->
             if Iter < 3 ->
-                    Iter;
+                    {Iter, Time};
                true ->
                     find_optimal_iterations(Fun, Attrs, round(ExpTime/Time * Iter), ExpTime)
             end;
        Time < ExpTime/2 ->
             find_optimal_iterations(Fun, Attrs, round(ExpTime/Time * Iter), ExpTime);
        true ->
-            Iter
+            {Iter, Time}
     end.
 
 -spec measure_helper(fun(), list(), number(), any(), number(), number(), boolean()) -> {float(), float()}.
